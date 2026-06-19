@@ -107,18 +107,30 @@ function render(data = transactions) {
 // STATS
 function updateStats() {
 
-    document.getElementById("totalRecords").textContent = transactions.length;
+    console.log(transactions); // DEBUG (important)
 
-    const total = transactions.reduce((a, b) => a + b.amount, 0);
-    document.getElementById("totalAmount").textContent = total.toFixed(2);
+    document.getElementById("totalRecords").textContent =
+        transactions.length;
+
+    const total = transactions.reduce((sum, t) => {
+        return sum + Number(t.amount);
+    }, 0);
+
+    document.getElementById("totalAmount").textContent =
+        total.toFixed(2);
 
     const cats = {};
+
     transactions.forEach(t => {
+        if (!t.category) return;
         cats[t.category] = (cats[t.category] || 0) + 1;
     });
 
-    const top = Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
-    document.getElementById("topCategory").textContent = top ? top[0] : "None";
+    const top = Object.entries(cats)
+        .sort((a, b) => b[1] - a[1])[0];
+
+    document.getElementById("topCategory").textContent =
+        top ? top[0] : "None";
 }
 
 // SEARCH
