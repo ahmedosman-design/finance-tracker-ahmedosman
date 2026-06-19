@@ -1,121 +1,166 @@
-import { validateField } from "./validators.js";
-import {
-    transactions,
-    addTransaction,
-    setTransactions
-} from "./state.js";
+let editingId = null;
 
-import {
-    saveTransactions,
-    loadTransactions
-} from "./storage.js";
+// INPUTS
+const descInput = document.getElementById("desc");
+const amountInput = document.getElementById("amount");
+const categoryInput = document.getElementById("category");
+const dateInput = document.getElementById("date");
 
-const form = document.getElementById("transactionForm");
-const tableBody = document.getElementById("tableBody");
+const searchInput = document.getElementById("searchInput");
+const sortSelect = document.getElementById("sortSelect");
 
-const totalRecords = document.getElementById("totalRecords");
-const totalAmount = document.getElementById("totalAmount");
-const topCategory = document.getElementById("topCategory");
+// NAV
+function showView(id) {
+    document.querySelectorAll("section").forEach(s => s.classList.add("hidden"));
+    document.getElementById(id).classList.remove("hidden");
+}
 
-function updateDashboard() {
-    totalRecords.textContent = `${transactions.length} Records`;
+// ADD / EDIT
+function addTransaction() {
 
-    const totalSpent = transactions.reduce(
-        (sum, transaction) => sum + Number(transaction.amount),
-        0
+    const error = validate(
+        descInput.value,
+        amountInput.value,
+        categoryInput.value,
+        dateInput.value
     );
 
-    totalAmount.textContent = `$${totalSpent.toFixed(2)}`;
+    if (error) return alert(error);
 
-    const categoryCounts = {};
+    if (editingId) {
 
-    transactions.forEach(transaction => {
-        categoryCounts[transaction.category] =
-            (categoryCounts[transaction.category] || 0) + 1;
-    });
+        const tx = transactions.find(t => t.id === editingId);
 
-    let highestCount = 0;
-    let mostUsedCategory = "No Category";
+        tx.description = descInput.value;
+        tx.amount = Number(amountInput.value);
+        tx.category = categoryInput.value;
+        tx.date = dateInput.value;
+        tx.updatedAt = new Date().toISOString();
 
-    for (const category in categoryCounts) {
-        if (categoryCounts[category] > highestCount) {
-            highestCount = categoryCounts[category];
-            mostUsedCategory = category;
-        }
+        editingId = null;
+
+    } else {
+
+        transactions.push({
+            id: Date.now().toString(),
+            description: descInput.value,
+            amount: Number(amountInput.value),
+            category: categoryInput.value,
+            date: dateInput.value,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
     }
 
-    topCategory.textContent = mostUsedCategory;
+    saveData();
+    render();
+
+    descInput.value = "";
+    amountInput.value = "";
+    categoryInput.value = "";
+    dateInput.value = "";
 }
 
-function renderTable() {
-    tableBody.innerHTML = "";
+// EDIT
+function editTx(id) {
+    const tx = transactions.find(t => t.id === id);
+    if (!tx) return;
 
-    transactions.forEach(transaction => {
-        const row = document.createElement("tr");
+    descInput.value = tx.description;
+    amountInput.value = tx.amount;
+    categoryInput.value = tx.category;
+    dateInput.value = tx.date;
 
-        row.innerHTML = `
-            <td>${transaction.description}</td>
-            <td>$${transaction.amount}</td>
-            <td>${transaction.category}</td>
-            <td>${transaction.date}</td>
-        `;
-
-        tableBody.appendChild(row);
-    });
+    editingId = id;
 }
-setTransactions(loadTransactions());
 
-renderTable();
-updateDashboard();
+// DELETE
+function deleteTx(id) {
+    transactions = transactions.filter(t => t.id !== id);
+    saveData();
+    render();
+}
 
-form.addEventListener("submit", (event) => {
-    event.preventDefault();
+// RENDER
+function render(data = transactions) {
 
-    const description =
-        document.getElementById("description").value;
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
 
-    const amount =
-        document.getElementById("amount").value;
+    data.forEach(t => {
+        tbody.innerHTML += `
+        <tr>
+            <td>${t.description}</td>
+            <td>${t.amount}</td>
+            <td>${t.category}</td>
+            <td>${t.date}</td>
+            <td>
+                <button onclick="editTx('${t.id}')">Edit</button>
+                <button onclick="deleteTx('${t.id}')">Delete</button>
+            </td>
+        </tr>`;
+    });
 
-    const category =
-        document.getElementById("category").value;
+    updateStats();
+}
 
-    const date =
-        document.getElementById("date").value;
+// STATS
+function updateStats() {
 
-    if (!validateField("description", description)) {
-        alert("Invalid description");
-        return;
-    }
+    document.getElementById("totalRecords").textContent = transactions.length;
 
-    if (!validateField("amount", amount)) {
-        alert("Invalid amount");
-        return;
-    }
+    const total = transactions.reduce((a, b) => a + b.amount, 0);
+    document.getElementById("totalAmount").textContent = total.toFixed(2);
 
-    if (!validateField("category", category)) {
-        alert("Invalid category");
-        return;
-    }
+    const cats = {};
+    transactions.forEach(t => {
+        cats[t.category] = (cats[t.category] || 0) + 1;
+    });
 
-    if (!validateField("date", date)) {
-        alert("Invalid date");
-        return;
-    }
+    const top = Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+    document.getElementById("topCategory").textContent = top ? top[0] : "None";
+}
 
-    const transaction = {
-        id: Date.now(),
-        description,
-        amount,
-        category,
-        date
-    };
-
-    addTransaction(transaction);
-    saveTransactions(transactions);
-
-    renderTable();
-    updateDashboard();
-
-    form.reset();
+// SEARCH
+searchInput.addEventListener("input", (e) => {
+    const results = searchData(e.target.value);
+    render(results);
 });
+
+// SORT
+sortSelect.addEventListener("change", (e) => {
+
+    let sorted = [...transactions];
+
+    switch (e.target.value) {
+
+        case "az":
+            sorted.sort((a,b)=>a.description.localeCompare(b.description));
+            break;
+
+        case "za":
+            sorted.sort((a,b)=>b.description.localeCompare(a.description));
+            break;
+
+        case "low":
+            sorted.sort((a,b)=>a.amount-b.amount);
+            break;
+
+        case "high":
+            sorted.sort((a,b)=>b.amount-a.amount);
+            break;
+
+        case "new":
+            sorted.sort((a,b)=>new Date(b.date)-new Date(a.date));
+            break;
+
+        case "old":
+            sorted.sort((a,b)=>new Date(a.date)-new Date(b.date));
+            break;
+    }
+
+    render(sorted);
+});
+
+// INIT
+render();

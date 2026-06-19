@@ -1,106 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Finance Tracker</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Finance Tracker</title>
 
-    <link rel="stylesheet" href="styles/style.css">
+<link rel="stylesheet" href="styles/style.css">
 </head>
+
 <body>
 
-    <a href="#main-content" class="skip-link">
-        Skip to Content
-    </a>
+<a href="#main" class="skip-link">Skip to Content</a>
 
-    <header>
-        <h1>Student Finance Tracker</h1>
+<header class="header">
+    <h1>Finance Tracker</h1>
 
-        <nav>
-            <ul>
-                <li><a href="#about">About</a></li>
-                <li><a href="#dashboard">Dashboard</a></li>
-                <li><a href="#records">Records</a></li>
-                <li><a href="#settings">Settings</a></li>
-            </ul>
-        </nav>
-    </header>
+    <nav class="nav">
+        <button onclick="showView('about')">About</button>
+        <button onclick="showView('dashboard')">Dashboard</button>
+        <button onclick="showView('records')">Records</button>
+        <button onclick="showView('form')">Add</button>
+        <button onclick="showView('settings')">Settings</button>
+    </nav>
+</header>
 
-    <main id="main-content">
+<main id="main" class="container">
 
-        <section id="about">
-            <h2>About</h2>
-            <p>A finance tracker for students.</p>
-        </section>
+<!-- ABOUT -->
+<section id="about" class="section">
+    <h2>About</h2>
 
-        <section id="dashboard">
-            <h2>Dashboard</h2>
+    <p>
+        Student Finance Tracker is a web application designed to help students
+        track income and expenses in a simple and visual way.
+    </p>
 
-            <div id="totalRecords">0 Records</div>
-            <div id="totalAmount">$0.00</div>
-            <div id="topCategory">No Category</div>
-        </section>
+    <p><strong>GitHub:</strong> YOUR_GITHUB</p>
+    <p><strong>Email:</strong> YOUR_EMAIL</p>
+</section>
 
-        <section id="formSection">
-            <h2>Add Transaction</h2>
+<!-- DASHBOARD -->
+<section id="dashboard" class="section hidden">
+    <h2>Dashboard</h2>
 
-            <form id="transactionForm">
+    <div id="status" aria-live="polite"></div>
 
-                <label for="description">Description</label>
-                <input type="text" id="description" required>
+    <div class="cards">
+        <div class="card">
+            <h3>Total Records</h3>
+            <p id="totalRecords">0</p>
+        </div>
 
-                <label for="amount">Amount</label>
-                <input type="text" id="amount" required>
+        <div class="card">
+            <h3>Total Spending</h3>
+            <p id="totalAmount">0</p>
+        </div>
 
-                <label for="category">Category</label>
-                <input type="text" id="category" required>
+        <div class="card">
+            <h3>Top Category</h3>
+            <p id="topCategory">None</p>
+        </div>
+    </div>
 
-                <label for="date">Date</label>
-                <input type="date" id="date" required>
+    <div id="chart"></div>
+</section>
 
-                <button type="submit">
-                    Add Transaction
-                </button>
+<!-- RECORDS -->
+<section id="records" class="section hidden">
+    <h2>Transactions</h2>
 
-            </form>
-        </section>
+    <input id="searchInput" placeholder="Search (regex supported)">
+    
+    <select id="sortSelect">
+        <option value="">Sort By</option>
+        <option value="az">A-Z</option>
+        <option value="za">Z-A</option>
+        <option value="low">Low-High</option>
+        <option value="high">High-Low</option>
+        <option value="new">Newest</option>
+        <option value="old">Oldest</option>
+    </select>
 
-        <section id="records">
-            <h2>Transactions</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Description</th>
-                        <th>Amount</th>
-                        <th>Category</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</section>
 
-                <tbody id="tableBody">
-                </tbody>
+<!-- FORM -->
+<section id="form" class="section hidden">
+    <h2>Add Transaction</h2>
 
-            </table>
-        </section>
+    <input id="desc" placeholder="Description">
+    <input id="amount" placeholder="Amount">
+    <input id="category" placeholder="Category">
+    <input id="date" type="date">
 
-        <section id="settings">
-            <h2>Settings</h2>
+    <button onclick="addTransaction()">Save</button>
+</section>
 
-            <button id="exportBtn">
-                Export JSON
-            </button>
+<!-- SETTINGS -->
+<section id="settings" class="section hidden">
+    <h2>Settings</h2>
 
-            <input type="file" id="importFile">
-        </section>
+    <button onclick="exportData()">Export JSON</button>
 
-    </main>
+    <input type="file" id="importFile" onchange="importData(event)">
+</section>
 
-    <footer>
-        <p>Ahmed Osman</p>
-    </footer>
+</main>
 
-    <script type="module" src="scripts/ui.js"></script>
+<script src="scripts/state.js"></script>
+<script src="scripts/storage.js"></script>
+<script src="scripts/validators.js"></script>
+<script src="scripts/search.js"></script>
+<script src="scripts/ui.js"></script>
 
 </body>
 </html>
